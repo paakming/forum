@@ -1,0 +1,41 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/forum?serverTimezone=Asia/Shanghai&useSSL=false&characterEncoding=utf8
+    username: root
+    password:
+    driver-class-name: com.mysql.jdbc.Driver
+  redis:
+    port: 6379
+  mail:
+    #QQ:smtp.qq.com
+    #  :yvxmefcbdfifechh
+    #port: 587
+    host: smtp.163.com
+    username: m2541994309@163.com
+    password: VTAOZRVFUNMCUEAI
+    port: 994
+    default-encoding: utf-8
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+          auth: true
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 20MB
+server:
+  port: 8080
+mybatis-plus:
+  global-config:
+    db-config:
+      logic-delete-field: isDelete # 全局逻辑删除的实体字段名(since 3.3.0,配置后可以忽略不配置步骤2)
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+  mapper-locations: classpath:mapper/*.xml
+  map-underscore-to-camel-case: true
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    cache-enabled: true
