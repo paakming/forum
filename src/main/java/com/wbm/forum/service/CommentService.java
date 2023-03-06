@@ -2,8 +2,9 @@ package com.wbm.forum.service;
 
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.wbm.forum.dto.CommentDTO;
+import com.wbm.forum.entity.vo.CommentVO;
 import com.wbm.forum.entity.Comment;
+
 import java.util.List;
 
 /**
@@ -13,12 +14,11 @@ import java.util.List;
 */
 public interface CommentService extends IService<Comment> {
 
-    List<CommentDTO> getComment(Integer pid);
+    List<CommentVO> getComment(Integer pid);
 
     Integer doComment(Comment comment);
 
-    Integer deleteComment(Integer cid);
-
     Integer deleteComments(List<Integer> ids);
-    //List<CommentDTO> getComment(Integer pid,Integer cid);
+
+    Integer deleteComment(Integer cid);
 }

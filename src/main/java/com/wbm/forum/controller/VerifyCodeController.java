@@ -2,7 +2,10 @@ package com.wbm.forum.controller;
 
 import cn.hutool.core.io.FastByteArrayOutputStream;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson.JSONObject;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
+import com.wbm.forum.common.Code;
 import com.wbm.forum.common.Result;
 import com.wbm.forum.common.ResultCode;
 import com.wbm.forum.utils.RedisUtils;
@@ -35,26 +38,29 @@ public class VerifyCodeController {
         String uuid = UUID.randomUUID().toString();
         String text = defaultKaptcha.createText();
         //存入redis
-        redisUtils.set(uuid,text,60*5L);
+        redisUtils.set(uuid,text,30L);
         BufferedImage bi = defaultKaptcha.createImage(text);
         FastByteArrayOutputStream stream = new FastByteArrayOutputStream();
         ImageIO.write(bi, "jpg", stream);
-        Map<String, String> map = new HashMap<>();
         String code = Base64.encodeBase64String(stream.toByteArray());
+        Map<String, String> map = new HashMap<>();
         map.put("uuid",uuid);
         map.put("verifyCode",code);
-        return Result.success(ResultCode.CODE_200,"verifyCode succeed",map);
+        return Result.success(Code.VERIFY_CODE_SUCCESS.getCode(), Code.VERIFY_CODE_SUCCESS.getMsg(),map);
     }
     @PostMapping(value = "/checkVerify/{verifyCode}/{uuid}")
     public Result check(@PathVariable("verifyCode") String verifyCode,@PathVariable("uuid") String uuid){
         if (uuid == null || verifyCode == null){
-            return Result.error(ResultCode.CODE_400,"验证码错误",null);
+            return Result.error(Code.VERIFICATION_FAIL.getCode(), Code.VERIFICATION_FAIL.getMsg());
         }
-        String text = redisUtils.get(uuid);
+        String text = redisUtils.strGet(uuid);
+        if (StrUtil.isBlank(text)){
+            return Result.error(Code.VERIFY_CODE_EXPIRED.getCode(), Code.VERIFY_CODE_EXPIRED.getMsg());
+        }
         if (text.equals(verifyCode)){
             redisUtils.delete(uuid);
-            return Result.success(ResultCode.CODE_200,null,null);
+            return Result.success(Code.VERIFICATION_SUCCESS.getCode(), Code.VERIFICATION_SUCCESS.getMsg());
         }
-        return Result.error(ResultCode.CODE_400,"验证码错误",null);
+        return Result.error(Code.VERIFICATION_FAIL.getCode(), Code.VERIFICATION_FAIL.getMsg());
     }
 }

@@ -18,37 +18,43 @@ public class Menu implements Serializable {
     /**
      * 
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "menu_id", type = IdType.AUTO)
     private Integer menuId;
 
     /**
      * 
      */
+    @TableField(value = "menu_name")
     private String menuName;
 
     /**
      * 
      */
+    @TableField(value = "path")
     private String path;
 
     /**
      * 
      */
+    @TableField(value = "component")
     private String component;
 
     /**
      * 
      */
+    @TableField(value = "is_delete")
     private Integer isDelete;
 
     /**
      * 
      */
+    @TableField(value = "create_time")
     private Date createTime;
 
     /**
      * 
      */
+    @TableField(value = "perm")
     private String perm;
 
     @TableField(exist = false)

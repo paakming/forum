@@ -1,6 +1,5 @@
-package com.wbm.forum.dto;
+package com.wbm.forum.entity.vo;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-public class CommentDTO {
+public class CommentVO {
 
     private Integer cid;
 
@@ -29,16 +28,17 @@ public class CommentDTO {
 
     private String avatar;
 
+    private Integer replyId;
+
     private String replyName;
 
     private String targetName;
 
     private String content;
 
-    @JsonFormat(pattern = " yyyy-MM-dd HH:mm:ss", timezone = "Asia/Shanghai")
     private LocalDateTime createTime;
 
-    private List<CommentDTO> subComment;
+    private List<CommentVO> subComment;
 
 
 }

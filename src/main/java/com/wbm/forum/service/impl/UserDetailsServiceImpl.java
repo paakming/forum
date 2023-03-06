@@ -2,8 +2,11 @@ package com.wbm.forum.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.wbm.forum.common.Code;
+import com.wbm.forum.common.ResultCode;
 import com.wbm.forum.entity.SecurityUser;
 import com.wbm.forum.entity.User;
+import com.wbm.forum.exception.MyServiceException;
 import com.wbm.forum.mapper.MenuMapper;
 import com.wbm.forum.mapper.UserMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +15,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @Author：Ming
@@ -30,9 +35,14 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         lambdaQueryWrapper.eq(User::getUsername,username);
         User user = userMapper.selectOne(lambdaQueryWrapper);
         if (ObjectUtil.isNull(user)){
-            throw new UsernameNotFoundException("用户不存在");
+            //throw new UsernameNotFoundException("用户不存在");
+            throw new MyServiceException(Code.USER_NON_EXISTENT.getCode(),Code.USER_NON_EXISTENT.getMsg());
         }
-        List<String> permission = menuMapper.selectTestByUid(user.getUid());
-        return new SecurityUser(user,permission);
+        List<String> permission = menuMapper.selectPermissionByUid(user.getUid());
+        List<String> path = menuMapper.selectPathByUid(user.getUid())
+                .stream().filter(Objects::nonNull).collect(Collectors.toList());
+        List<String> component = menuMapper.selectComponentByUid(user.getUid())
+                .stream().filter(Objects::nonNull).collect(Collectors.toList());
+        return new SecurityUser(user,permission,path,component);
     }
 }

@@ -14,13 +14,15 @@
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="is_delete" jdbcType="VARCHAR"/>
             <result property="avatar" column="avatar" jdbcType="VARCHAR"/>
-            <result property="userType" column="user_type" jdbcType="VARCHAR"/>
+            <result property="identity" column="identity" jdbcType="VARCHAR"/>
+            <result property="email" column="email" jdbcType="VARCHAR"/>
+            <result property="birthday" column="birthday" jdbcType="DATE"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         uid,username,password,
         nickname,sex,phone,
         create_time,is_delete,avatar,
-        user_type
+        identity,email,birthday
     </sql>
 </mapper>

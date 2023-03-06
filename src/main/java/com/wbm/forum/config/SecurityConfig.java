@@ -48,9 +48,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http
                 .authorizeRequests()
-                .antMatchers("/login","/verifyCode","/checkVerify/{verifyCode}/{uuid}").anonymous()
-                .antMatchers("/post","/post/{pid}","/post/theseComment","/image/**","/img/upload").permitAll()
-                .antMatchers(HttpMethod.GET,"/comment/**","/logout").permitAll()
+                .antMatchers("/","/login").anonymous()
+                .antMatchers("/image/**","/logout","/checkVerify/{verifyCode}/{uuid}","/verifyCode","/img/upload",
+                        "/email/**", "/user/forget/**","/user/register").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .csrf()
@@ -59,7 +59,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .rememberMe()
                 .and().cors().configurationSource(corsConfigurationSource());
-
+        http
+                .logout().disable();
         //添加过滤器
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -68,7 +69,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler);
     }
-
+    //跨域
     CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedHeaders(Arrays.asList("*"));

@@ -1,18 +1,23 @@
 package com.wbm.forum.filter;
 
-import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.wbm.forum.common.Result;
 import com.wbm.forum.entity.SecurityUser;
 import com.wbm.forum.utils.JwtUtils;
 import com.wbm.forum.utils.RedisUtils;
+import com.wbm.forum.utils.WebUtils;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -33,21 +38,32 @@ public class JwtFilter extends OncePerRequestFilter {
         String token = request.getHeader("token");
         if (StrUtil.isBlank(token)){
             filterChain.doFilter(request,response);
-            return;
+            return ;
         }
         String uid;
         //解析token
         //要异常处理
-        Claims claims = JwtUtils.parseJwtToken(token);
+        Claims claims = null;
+        try {
+            claims = JwtUtils.parseJwtToken(token);
+        }catch (JwtException e){
+            Result result = new Result(HttpStatus.UNAUTHORIZED.value(),"请重新登录");
+            WebUtils.renderString(response,JSON.toJSONString(result));
+            return;
+        }
         uid = (String) claims.get("uid");
         String key = "login-"+uid;
-        String strJson = redisUtils.get(key);
-        if (StrUtil.isBlank(strJson)){
-            throw new RuntimeException("请重新登录");
+        String s = redisUtils.strGet(key);
+        if (ObjectUtil.isNull(s)){
+            Result result = new Result(HttpStatus.UNAUTHORIZED.value(),"请重新登录");
+            WebUtils.renderString(response,JSON.toJSONString(result));
+            return;
         }
-        SecurityUser securityUser = JSONUtil.toBean(strJson, new TypeReference<SecurityUser>(){},true);
+        SecurityUser securityUser = JSON.parseObject(s,SecurityUser.class);
         if (ObjectUtil.isNull(securityUser)){
-            throw new RuntimeException("请重新登录");
+            Result result = new Result(HttpStatus.UNAUTHORIZED.value(),"请重新登录");
+            WebUtils.renderString(response,JSON.toJSONString(result));
+            return;
         }
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(securityUser,null,securityUser.getAuthorities());

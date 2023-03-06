@@ -1,4 +1,4 @@
-package com.wbm.forum.dto;
+package com.wbm.forum.entity.vo;
 
 
 import lombok.AllArgsConstructor;
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Accessors(chain = true)
-public class PostDTO {
+public class PostVO {
     private Integer pid;
 
     private Integer uid;

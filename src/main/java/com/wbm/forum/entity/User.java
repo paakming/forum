@@ -1,11 +1,14 @@
 package com.wbm.forum.entity;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,7 +29,7 @@ public class User implements Serializable {
     private Integer uid;
 
     /**
-     * 
+     * 用户名
      */
     @TableField(value = "username")
     private String username;
@@ -74,10 +77,23 @@ public class User implements Serializable {
     private String avatar;
 
     /**
-     * 
+     * 绑定学号或工号
      */
-    @TableField(value = "user_type")
-    private String userType;
+    @TableField(value = "identity")
+    private String identity;
+
+    /**
+     * 邮箱
+     */
+    @TableField(value = "email")
+    private String email;
+
+    /**
+     * 出生日期
+     */
+    @TableField(value = "birthday")
+    @JSONField(format="yyyy-MM-dd")
+    private Date birthday;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

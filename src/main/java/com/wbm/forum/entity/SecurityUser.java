@@ -21,6 +21,8 @@ public class SecurityUser implements UserDetails{
 
     private User user;
     private List<String> permission;
+    private List<String> path;
+    private List<String> component;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

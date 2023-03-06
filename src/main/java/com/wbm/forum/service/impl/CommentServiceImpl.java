@@ -1,17 +1,16 @@
 package com.wbm.forum.service.impl;
 
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.lang.TypeReference;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.wbm.forum.dto.CommentDTO;
+import com.wbm.forum.entity.vo.CommentVO;
 import com.wbm.forum.entity.Comment;
 import com.wbm.forum.entity.SecurityUser;
 import com.wbm.forum.entity.User;
 import com.wbm.forum.mapper.CommentMapper;
+import com.wbm.forum.mapper.UserMapper;
 import com.wbm.forum.service.CommentService;
 import com.wbm.forum.utils.RedisUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,43 +31,48 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
     @Autowired
     private CommentMapper commentMapper;
     @Autowired
+    private UserMapper userMapper;
+    @Autowired
     private RedisUtils redisUtils;
+
     @Override
-    public List<CommentDTO> getComment(Integer pid) {
-        String com = redisUtils.get("comment_" + pid);
-        if (StrUtil.isNotBlank(com)){
-            List<CommentDTO> commentDTOS = JSONUtil.toBean(com, new TypeReference<List<CommentDTO>>() {
-            }, true);
-            return commentDTOS;
-        }
+    public List<CommentVO> getComment(Integer pid) {
         LambdaQueryWrapper<Comment> lambdaQueryWrapper = Wrappers.lambdaQuery();
         lambdaQueryWrapper.eq(Comment::getPid,pid);
         List<Comment> commentList = commentMapper.selectList(lambdaQueryWrapper);
-        List<CommentDTO> commentDTOS = commentList.stream().map(config -> Convert.convert(CommentDTO.class, config)).collect(Collectors.toList());
+        List<CommentVO> commentVOS = commentList.stream().map(config -> Convert.convert(CommentVO.class, config)).collect(Collectors.toList());
         for (Comment comment : commentList) {
-            for (CommentDTO commentDTO : commentDTOS) {
-                if (!comment.getCid().equals(commentDTO.getCid())){
+            for (CommentVO commentVO : commentVOS) {
+                if (!comment.getCid().equals(commentVO.getCid())){
                     continue;
                 }
                 if (comment.getTargetId() != null ){
-                    String s = redisUtils.get("user" + comment.getTargetId());
-                    User user = JSONUtil.toBean(s, new TypeReference<User>() {}, true);
-                    commentDTO.setTargetName(user.getNickname());
+                    User user = getUser(comment.getReplyId());
+                    commentVO.setTargetName(user.getNickname());
                 }
-                String s = redisUtils.get("user" + comment.getReplyId());
-                User user = JSONUtil.toBean(s, new TypeReference<User>() {}, true);
-                commentDTO.setReplyName(user.getNickname()).setAvatar(user.getAvatar());
+                User user = getUser(comment.getReplyId());
+                commentVO.setReplyName(user.getNickname()).setAvatar(user.getAvatar());
             }
         }
-        List<CommentDTO> rootCommentDTOS = commentDTOS.stream().filter(commentDTO -> commentDTO.getTargetName() == null).collect(Collectors.toList());
-        for (CommentDTO rootCommentDTO : rootCommentDTOS) {
-            rootCommentDTO.setSubComment(commentDTOS.stream()
-                    .filter(commentDTO -> rootCommentDTO.getCid().equals(commentDTO.getSubId()))
+        List<CommentVO> rootCommentVOS = commentVOS.stream().filter(commentVO -> commentVO.getTargetName() == null).collect(Collectors.toList());
+        for (CommentVO rootCommentVO : rootCommentVOS) {
+            rootCommentVO.setSubComment(commentVOS.stream()
+                    .filter(commentVO -> rootCommentVO.getCid().equals(commentVO.getSubId()))
                     .collect(Collectors.toList()));
         }
-        redisUtils.set("comment_"+pid,JSONUtil.toJsonStr(rootCommentDTOS));
-        return rootCommentDTOS;
+        return rootCommentVOS;
     }
+
+    public User getUser(Integer uid){
+        Object userRedis = redisUtils.hget("userMap",uid.toString());
+        User user = Convert.convert(User.class, userRedis);
+        if (ObjectUtil.isNull(userRedis)){
+            user= userMapper.selectById(uid);
+        }
+        return user;
+    }
+
+
 
     @Override
     public Integer doComment(Comment comment) {
@@ -76,9 +80,16 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
         comment.setReplyId(securityUser.getUser().getUid());
         if (comment.getSubId()==null && comment.getTargetId()==null &&comment.getCid()==null){
             LambdaQueryWrapper<Comment> lambdaQueryWrapper = Wrappers.lambdaQuery();
-            lambdaQueryWrapper.select(Comment::getFloor).isNotNull(Comment::getFloor).orderByDesc(Comment::getFloor).eq(Comment::getPid,2);
-            Integer lastFloor = commentMapper.selectList(lambdaQueryWrapper).get(0).getFloor();
-            comment.setFloor(lastFloor+1);
+            lambdaQueryWrapper
+                    .select(Comment::getFloor).isNotNull(Comment::getFloor)
+                    .orderByDesc(Comment::getFloor).eq(Comment::getPid,comment.getPid());
+            List<Comment> comments = commentMapper.selectList(lambdaQueryWrapper);
+            if (comments.size()==0){
+                comment.setFloor(2);
+            }else {
+                Integer lastFloor = comments.get(0).getFloor();
+                comment.setFloor(lastFloor+1);
+            }
         }
         if (comment.getCid()!=null){
             comment.setReplyId(securityUser.getUser().getUid());
@@ -87,11 +98,15 @@ public class CommentServiceImpl extends ServiceImpl<CommentMapper, Comment>
             Integer TargetId = commentMapper.selectOne(queryWrapper).getReplyId();
             comment.setTargetId(TargetId).setSubId(comment.getCid()).setCid(null);
         }
-        return commentMapper.insert(comment);
+        int insert = commentMapper.insert(comment);
+        return insert;
     }
 
     @Override
     public Integer deleteComment(Integer cid) {
+        LambdaQueryWrapper<Comment> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Comment::getCid,cid);
+        Integer pid = commentMapper.selectOne(queryWrapper).getPid();
         return commentMapper.deleteById(cid);
     }
 

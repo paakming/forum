@@ -1,6 +1,7 @@
 package com.wbm.forum.controller;
 
 
+import com.wbm.forum.common.Code;
 import com.wbm.forum.common.Result;
 import com.wbm.forum.common.ResultCode;
 import com.wbm.forum.entity.SecurityUser;
@@ -26,23 +27,17 @@ public class LoginController {
     @Autowired
     private RedisUtils redisUtils;
 
-    @PreAuthorize("hasAuthority('system:post:test')")
-    @GetMapping(value = "/user/hello")
-    public Result hello(){
-        return new Result(ResultCode.CODE_200,null,"Hello World");
-    }
-
     @PostMapping(value = "/login")
     public Result login(@RequestBody User user){
         return userService.login(user);
     }
 
-    @GetMapping(value = "/login/logout")
+    @GetMapping(value = "/logout")
     public Result logout(){
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String login = "login-"+securityUser.getUser().getUid();
         redisUtils.delete(login);
-        return Result.success(ResultCode.CODE_200,"退出成功",null);
+        return Result.success(Code.SUCCESS.getCode(),Code.SUCCESS.getMsg());
     }
 
 }

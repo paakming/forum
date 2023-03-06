@@ -4,6 +4,8 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import com.wbm.forum.common.Result;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
@@ -18,6 +20,7 @@ import java.io.IOException;
 public class ImageController {
 
     @PostMapping("/upload")
+//    @PreAuthorize("hasAuthority('system:image:upload')")
     public Object ImageUpload(@RequestParam("file") MultipartFile file){
         String path = "http://localhost:8080/image/";
         JSONObject obj = new JSONObject();
@@ -47,4 +50,5 @@ public class ImageController {
         obj.set("data",data);
         return obj;
     }
+
 }
