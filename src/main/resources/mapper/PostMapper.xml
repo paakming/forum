@@ -14,11 +14,18 @@
             <result property="isTop" column="is_top" jdbcType="VARCHAR"/>
             <result property="isDelete" column="is_delete" jdbcType="VARCHAR"/>
             <result property="type" column="type" jdbcType="VARCHAR"/>
+            <result property="likes" column="likes" jdbcType="BIGINT"/>
+            <result property="views" column="views" jdbcType="BIGINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         pid,uid,title,
         content,create_time,update_time,
-        is_top,is_delete,type
+        is_top,is_delete,type,
+        likes,views
     </sql>
+
+    <select id="selectCommentNum"  resultType="integer">
+        select
+    </select>
 </mapper>

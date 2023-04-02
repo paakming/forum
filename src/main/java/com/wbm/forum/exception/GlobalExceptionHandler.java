@@ -1,11 +1,9 @@
 package com.wbm.forum.exception;
 
 
+import com.wbm.forum.common.Code;
 import com.wbm.forum.common.Result;
-import com.wbm.forum.common.ResultCode;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
@@ -19,6 +17,6 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public Result exceptionHandle(Exception e){
 
-        return Result.error(ResultCode.CODE_500,e.getMessage());
+        return Result.error(Code.ERROR.getCode(),e.getMessage());
     }
 }

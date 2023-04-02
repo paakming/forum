@@ -33,6 +33,10 @@ public class PostVO {
 
     private String type;
 
+    private Integer likes;
+
+    private String isLike;
+
     private Integer commentNum;
 
     private LocalDateTime createTime;

@@ -15,8 +15,6 @@ public interface UserService extends IService<User> {
 
     Map<String, Object> getAllUser(Integer pageNum, Integer pageSize);
 
-    Boolean UpdateUser(User user);
-
     Boolean changePwd(String oldPassword, String newPassword, String repeatPassword);
 
     Boolean forgetPassword(String username, String password, String email, String code);

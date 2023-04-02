@@ -1,14 +1,13 @@
 package com.wbm.forum.mapper;
 
-
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.wbm.forum.entity.Comment;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.springframework.stereotype.Repository;
 
 /**
 * @author Ming
 * @description 针对表【comment】的数据库操作Mapper
-* @createDate 2022-11-20 00:07:51
+* @createDate 2023-03-15 19:47:37
 * @Entity com.wbm.forum.entity.Comment
 */
 @Repository

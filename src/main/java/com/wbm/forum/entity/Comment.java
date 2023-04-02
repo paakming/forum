@@ -1,8 +1,13 @@
 package com.wbm.forum.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -43,18 +48,6 @@ public class Comment implements Serializable {
     private Integer replyId;
 
     /**
-     * 被回复人
-     */
-    @TableField(value = "target_id")
-    private Integer targetId;
-
-    /**
-     * 子评论标记
-     */
-    @TableField(value = "sub_id")
-    private Integer subId;
-
-    /**
      * 回复内容
      */
     @TableField(value = "content")
@@ -71,6 +64,12 @@ public class Comment implements Serializable {
      */
     @TableField(value = "is_delete")
     private String isDelete;
+
+    /**
+     * 
+     */
+    @TableField(value = "likes")
+    private Long likes;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

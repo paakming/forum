@@ -27,7 +27,7 @@ public enum Code {
     VERIFICATION_SUCCESS(2000,"验证成功"),
     PASSWORD_OLD_WRONG(5000,"旧密码错误"),
     PASSWORD_UPDATE_FAIL(5000,"修改密码失败"),
-    PASSWORD_TWICE_FAIL(5000,"两次密码输入不正确"),
+    PASSWORD_TWICE_FAIL(5000,"两次密码输入不一致"),
     REGISTER_ERROR(5000,"注册失败"),
     ;
 

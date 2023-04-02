@@ -2,17 +2,19 @@ package com.wbm.forum.service.impl;
 
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.sun.istack.internal.NotNull;
-import com.wbm.forum.entity.Comment;
-import com.wbm.forum.entity.Post;
-import com.wbm.forum.entity.SecurityUser;
-import com.wbm.forum.entity.User;
+import com.wbm.forum.common.Code;
+import com.wbm.forum.entity.*;
 import com.wbm.forum.entity.vo.PostVO;
+import com.wbm.forum.exception.MyServiceException;
 import com.wbm.forum.mapper.CommentMapper;
 import com.wbm.forum.mapper.PostMapper;
+import com.wbm.forum.mapper.SubCommentMapper;
 import com.wbm.forum.mapper.UserMapper;
 import com.wbm.forum.service.PostService;
 import com.wbm.forum.utils.BeanCopyUtils;
@@ -22,10 +24,11 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
 * @author Ming
@@ -44,6 +47,8 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     @Autowired
     private CommentMapper commentMapper;
     @Autowired
+    private SubCommentMapper subCommentMapper;
+    @Autowired
     private RedisUtils redisUtils;
 
     @Override
@@ -52,8 +57,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         PostVO postVO = new PostVO();
         BeanUtils.copyProperties(post, postVO);
         User user = userMapper.selectById(post.getUid());
-        postVO.setAvatar(user.getAvatar());
-        postVO.setNickname(user.getNickname());
+        postVO.setAvatar(user.getAvatar()).setNickname(user.getNickname()).setLikes(getLikes(pid));
+        Boolean like = isLike(pid);
+        if (like){
+            postVO.setIsLike("1");
+        }
         return postVO;
     }
 
@@ -63,7 +71,7 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         queryWrapper.eq(Post::getUid,uid);
         Page<Post> postPage = postMapper.selectPage(new Page<>(pageNum, pageSize), queryWrapper);
         List<PostVO> postVOS = BeanCopyUtils.copyBeanList(postPage.getRecords(), PostVO.class);
-        postVOS.forEach(postVO -> setUserInfo(postVO));
+        postVOS.forEach(this::setUserInfo);
         int total = (int) postPage.getTotal();
         Map<String,Object> map = new HashMap<>();
         map.put("post", postVOS);
@@ -74,36 +82,27 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     @Override
     public Map<String, Object> getAllPost(Integer pageNum, Integer pageSize) {
         LambdaQueryWrapper<Post> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper
-                .orderBy(true,false,Post::getIsTop)
+        queryWrapper.orderBy(true,false,Post::getIsTop)
                 .orderBy(true,false,Post::getUpdateTime);
         Page<Post> posts = postMapper.selectPage(new Page<>(pageNum,pageSize),queryWrapper);
         List<PostVO> postVOS = BeanCopyUtils.copyBeanList(posts.getRecords(), PostVO.class);
-        postVOS.forEach(postVO -> setUserInfo(postVO));
+        postVOS.forEach(this::setUserInfo);
+        postVOS.forEach(this::setCommentNum);
         int total = (int) posts.getTotal();
         Map<String,Object> map = new HashMap<>();
         map.put("post", postVOS);
         map.put("total",total);
-     //   map.put("top",getTopPost());
         return map;
     }
 
-    @Override
-    public List<PostVO> getTopPost() {
-            LambdaQueryWrapper<Post> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper
-                    .eq(Post::getIsTop,"1")
-                    .orderBy(true,false,Post::getUpdateTime);
-            List<Post> posts = postMapper.selectList(queryWrapper);
-            List<PostVO> topPost = BeanCopyUtils.copyBeanList(posts, PostVO.class);
-            topPost.forEach(postVO -> setUserInfo(postVO));
-        return topPost;
-    }
 
     @Override
     public Integer addPost(Post post) {
+        if (StrUtil.isBlank(post.getTitle())|| StrUtil.isBlank(post.getType())||StrUtil.isBlank(post.getContent())){
+            throw new MyServiceException(Code.ERROR.getCode(),"发帖失败");
+        }
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        post.setUid(securityUser.getUser().getUid());
+        post.setUid(securityUser.getUser().getUid()).setViews(1L).setLikes(0L);
         return postMapper.insert(post);
     }
 
@@ -117,11 +116,19 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(Post::getTitle,key);
         List<Post> postList = postMapper.selectList(wrapper);
-        List<PostVO> postVOS = BeanCopyUtils.copyBeanList(postList, PostVO.class);
-        return postVOS;
+        return BeanCopyUtils.copyBeanList(postList, PostVO.class);
+    }
+    public Integer getLikes(Integer pid){
+        Set<Object> objects = redisUtils.setMembers("postLikes" + pid);
+        return objects.size();
+    }
+    public Boolean isLike(Integer pid){
+        SecurityUser principal = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Set<Object> objects = redisUtils.setMembers("postLikes" + pid);
+        return objects.contains(principal.getUser().getUid());
     }
 
-    public PostVO setUserInfo(@NotNull PostVO postVO){
+    public void setUserInfo(PostVO postVO){
         Object userRedis = redisUtils.hget("userMap", postVO.getUid().toString());
         User user = Convert.convert(User.class, userRedis);
         if (ObjectUtil.isNull(userRedis)){
@@ -130,11 +137,21 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
             user = userMapper.selectOne(queryWrapper);
         }
         postVO.setNickname(user.getNickname()).setAvatar(user.getAvatar());
+    }
+
+    public void setCommentNum(PostVO postVO) {
         LambdaQueryWrapper<Comment> lambdaQueryWrapper = new LambdaQueryWrapper();
         lambdaQueryWrapper.eq(Comment::getPid, postVO.getPid());
-        int size = commentMapper.selectList(lambdaQueryWrapper).size();
-        postVO.setCommentNum(size);
-        return postVO;
+        List<Comment> comments = commentMapper.selectList(lambdaQueryWrapper);
+        int sub = 0;
+        for (Comment comment : comments) {
+            LambdaQueryWrapper<SubComment> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(SubComment::getRootId,comment.getCid());
+            int size = subCommentMapper.selectList(wrapper).size();
+            sub +=size;
+        }
+        int size = comments.size();
+        postVO.setCommentNum(size+sub);
     }
 }
 

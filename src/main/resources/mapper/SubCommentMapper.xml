@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.wbm.forum.mapper.SubCommentMapper">
+
+    <resultMap id="BaseResultMap" type="com.wbm.forum.entity.SubComment">
+            <id property="subId" column="sub_id" jdbcType="INTEGER"/>
+            <result property="rootId" column="root_id" jdbcType="INTEGER"/>
+            <result property="replyId" column="reply_id" jdbcType="INTEGER"/>
+            <result property="targetId" column="target_id" jdbcType="INTEGER"/>
+            <result property="content" column="content" jdbcType="VARCHAR"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="idDeleted" column="id_deleted" jdbcType="VARCHAR"/>
+            <result property="likes" column="likes" jdbcType="BIGINT"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        sub_id,root_id,reply_id,
+        target_id,content,create_time,
+        id_deleted,likes
+    </sql>
+</mapper>

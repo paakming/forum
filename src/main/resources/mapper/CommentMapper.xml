@@ -9,16 +9,15 @@
             <result property="pid" column="pid" jdbcType="INTEGER"/>
             <result property="floor" column="floor" jdbcType="INTEGER"/>
             <result property="replyId" column="reply_id" jdbcType="INTEGER"/>
-            <result property="targetId" column="target_id" jdbcType="INTEGER"/>
-            <result property="subId" column="sub_id" jdbcType="INTEGER"/>
             <result property="content" column="content" jdbcType="VARCHAR"/>
             <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
             <result property="isDelete" column="is_delete" jdbcType="VARCHAR"/>
+            <result property="likes" column="likes" jdbcType="BIGINT"/>
     </resultMap>
 
     <sql id="Base_Column_List">
         cid,pid,floor,
-        reply_id,target_id,sub_id,
-        content,create_time,is_delete
+        reply_id,content,create_time,
+        is_delete,likes
     </sql>
 </mapper>

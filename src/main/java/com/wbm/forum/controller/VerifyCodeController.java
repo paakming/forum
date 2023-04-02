@@ -3,11 +3,9 @@ package com.wbm.forum.controller;
 import cn.hutool.core.io.FastByteArrayOutputStream;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.fastjson.JSONObject;
 import com.google.code.kaptcha.impl.DefaultKaptcha;
 import com.wbm.forum.common.Code;
 import com.wbm.forum.common.Result;
-import com.wbm.forum.common.ResultCode;
 import com.wbm.forum.utils.RedisUtils;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +35,6 @@ public class VerifyCodeController {
     public Result verifyCode() throws IOException {
         String uuid = UUID.randomUUID().toString();
         String text = defaultKaptcha.createText();
-        //存入redis
         redisUtils.set(uuid,text,30L);
         BufferedImage bi = defaultKaptcha.createImage(text);
         FastByteArrayOutputStream stream = new FastByteArrayOutputStream();

@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,8 +19,8 @@ import lombok.experimental.Accessors;
  */
 @TableName(value ="post")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Accessors(chain = true)
 public class Post implements Serializable {
     /**
@@ -74,6 +76,18 @@ public class Post implements Serializable {
      */
     @TableField(value = "type")
     private String type;
+
+    /**
+     * 
+     */
+    @TableField(value = "likes")
+    private Long likes;
+
+    /**
+     * 
+     */
+    @TableField(value = "views")
+    private Long views;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;

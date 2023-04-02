@@ -3,7 +3,6 @@ package com.wbm.forum.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.wbm.forum.common.Code;
-import com.wbm.forum.common.ResultCode;
 import com.wbm.forum.entity.SecurityUser;
 import com.wbm.forum.entity.User;
 import com.wbm.forum.exception.MyServiceException;
@@ -28,14 +27,12 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private UserMapper userMapper;
     @Autowired
     private MenuMapper menuMapper;
-
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(User::getUsername,username);
         User user = userMapper.selectOne(lambdaQueryWrapper);
         if (ObjectUtil.isNull(user)){
-            //throw new UsernameNotFoundException("用户不存在");
             throw new MyServiceException(Code.USER_NON_EXISTENT.getCode(),Code.USER_NON_EXISTENT.getMsg());
         }
         List<String> permission = menuMapper.selectPermissionByUid(user.getUid());

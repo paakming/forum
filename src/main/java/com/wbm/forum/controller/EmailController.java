@@ -1,17 +1,16 @@
 package com.wbm.forum.controller;
 
 
+import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.StrUtil;
 import com.wbm.forum.common.Code;
 import com.wbm.forum.common.Result;
-import com.wbm.forum.common.ResultCode;
 import com.wbm.forum.utils.RedisUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.lang.NonNull;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import javax.websocket.server.PathParam;
@@ -28,12 +27,13 @@ public class EmailController {
     private RedisUtils redisUtils;
     @Autowired
     private JavaMailSender javaMailSender;
+
     @Value("${spring.mail.username}")
     private String from;
 
     @GetMapping(value = "/email")
     public Result getEmail(@PathParam("emailReceiver")  String emailReceiver){
-        if (emailReceiver == null|| StrUtil.isBlank(emailReceiver)){
+        if (Validator.isEmail(emailReceiver) || StrUtil.isBlank(emailReceiver) ){
             return Result.error(Code.ERROR.getCode(),"请输入邮箱地址");
         }
         SimpleMailMessage mailMessage = new SimpleMailMessage();
@@ -46,7 +46,7 @@ public class EmailController {
             int r = random.nextInt(10);
             code.append(r);
         }
-        String text = "【Test】您的验证码为："+code+"，请勿泄露给他人，有效期为10分钟。";
+        String text = "【校园论坛】您的验证码为："+code+"，请勿泄露给他人，有效期为10分钟。";
         mailMessage.setText(text);
         redisUtils.set(emailReceiver,code.toString(),10L);
         javaMailSender.send(mailMessage);

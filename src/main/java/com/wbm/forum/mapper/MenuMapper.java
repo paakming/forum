@@ -1,7 +1,9 @@
 package com.wbm.forum.mapper;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.wbm.forum.entity.Menu;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.wbm.forum.entity.vo.RoleMenuVO;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,8 +17,12 @@ import java.util.List;
 @Repository
 public interface MenuMapper extends BaseMapper<Menu> {
     List<String> selectPermissionByUid(Integer uid);
+
     List<String> selectPathByUid(Integer uid);
+
     List<String> selectComponentByUid(Integer uid);
+
+    IPage<RoleMenuVO> selectMenuByRoleId(IPage<?> page,Integer roleId);
 
 
 }

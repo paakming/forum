@@ -1,6 +1,5 @@
 package com.wbm.forum.service.impl;
 
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -9,13 +8,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wbm.forum.common.Code;
 import com.wbm.forum.common.Result;
-import com.wbm.forum.common.ResultCode;
 import com.wbm.forum.entity.SecurityUser;
 import com.wbm.forum.entity.User;
 import com.wbm.forum.entity.vo.UserVO;
 import com.wbm.forum.exception.MyServiceException;
 import com.wbm.forum.mapper.UserMapper;
-import com.wbm.forum.service.MenuService;
+import com.wbm.forum.service.RoleService;
 import com.wbm.forum.service.UserService;
 import com.wbm.forum.utils.BeanCopyUtils;
 import com.wbm.forum.utils.JwtUtils;
@@ -44,13 +42,14 @@ import java.util.Map;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService {
 
-
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
     private RedisUtils redisUtils;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private RoleService roleService;
 
     @Override
     public Result login(User user) {
@@ -60,15 +59,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if (ObjectUtil.isNull(authentication)){
             throw new MyServiceException(Code.LOGIN_FAIL.getCode(),Code.LOGIN_FAIL.getMsg());
         }
-        //获取认证用户
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
         String uid = securityUser.getUser().getUid().toString();
         String jwt = JwtUtils.getJwtToken(uid);
         String str = JSON.toJSONString(securityUser);
         redisUtils.set("login-"+uid, str,60*24L);
-        redisUtils.set("user"+uid,JSON.toJSONString(user));
         HashMap<String, Object> map = new HashMap<>();
-//        UserVO userVO = BeanCopyUtils.copyBean(securityUser.getUser(), UserVO.class);
         map.put("user", securityUser.getUser());
         map.put("permission", securityUser.getPermission());
         map.put("path", securityUser.getPath());
@@ -92,16 +88,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public Boolean UpdateUser(User user) {
-        return save(user);
-    }
-
-    @Override
     public Boolean changePwd(String oldPassword, String newPassword, String repeatPassword) {
         SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String password = securityUser.getPassword();
         PasswordEncoder encoder = new BCryptPasswordEncoder();
-        //encoder.matches(”明文密码“,加密后的密码)
         boolean matches = encoder.matches(oldPassword,password);
         if (matches){
             String encode = encoder.encode(newPassword);
@@ -114,7 +104,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
                 return true;
             }
         }else {
-            throw new MyServiceException(ResultCode.CODE_500,"旧密码错误");
+            throw new MyServiceException(Code.PASSWORD_OLD_WRONG.getCode(),"旧密码错误");
         }
         return false;
     }
@@ -147,33 +137,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public Boolean register(User user) {
         checkUsernameUnique(user.getUsername());
         checkNicknameUnique(user.getNickname());
-        if (StrUtil.isBlank(user.getPassword())){
-            user.setPassword(user.getUsername());
-        }
-        log.info("user---{}",user);
         PasswordEncoder encoder = new BCryptPasswordEncoder();
         String encode = encoder.encode(user.getPassword());
-        user.setPassword(encode);
-        return save(user);
+        user.setPassword(encode).setSex("保密");
+        int insert = userMapper.insert(user);
+        if (StrUtil.isNotBlank(user.getIdentity())){
+            roleService.makeRoleForUser(user);
+        }
+        if (1==insert){
+            redisUtils.hset("userMap",user.getUid().toString(),user);
+            return true;
+        }
+        return false;
     }
-
-    public Boolean checkUsernameUnique(String username){
+    public void checkUsernameUnique(String username){
         LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(User::getUsername,username);
         User user = userMapper.selectOne(queryWrapper);
-        if (ObjectUtil.isNull(user)){
-            return true;
-        }else {
+        if (ObjectUtil.isNotNull(user)){
             throw new MyServiceException(Code.REGISTER_ERROR.getCode(), "用户名已存在");
         }
     }
-    public Boolean checkNicknameUnique(String nickname){
+    public void checkNicknameUnique(String nickname){
         LambdaQueryWrapper<User> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(User::getUsername,nickname);
         User user = userMapper.selectOne(wrapper);
-        if (ObjectUtil.isNull(user)){
-            return true;
-        }else {
+        if (ObjectUtil.isNotNull(user)){
             throw new MyServiceException(Code.REGISTER_ERROR.getCode(), "昵称已存在");
         }
     }

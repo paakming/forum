@@ -1,5 +1,6 @@
 package com.wbm.forum.entity.vo;
 
+import com.wbm.forum.entity.SubComment;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,21 +25,21 @@ public class CommentVO {
 
     private Integer floor;
 
-    private Integer subId;
-
     private String avatar;
 
     private Integer replyId;
 
     private String replyName;
 
-    private String targetName;
+    private Integer subCommentNum;
 
     private String content;
 
-    private LocalDateTime createTime;
+    private Integer likes;
 
-    private List<CommentVO> subComment;
+    private String isLike;
+
+    private LocalDateTime createTime;
 
 
 }

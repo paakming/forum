@@ -19,8 +19,6 @@ public interface PostService extends IService<Post> {
 
     Map<String, Object> getAllPost(Integer pageNum, Integer pageSize);
 
-    List<PostVO> getTopPost();
-
     Integer addPost(Post post);
 
     Integer deletePost(Integer pid);

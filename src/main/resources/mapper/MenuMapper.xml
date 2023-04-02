@@ -43,4 +43,11 @@
                  LEFT JOIN menu m ON m.menu_id = rm.menu_id
         WHERE uid = #{uid}
     </select>
+    <select id="selectMenuByRoleId" resultType="com.wbm.forum.entity.vo.RoleMenuVO">
+        SELECT m.*
+        FROM menu m
+                 LEFT JOIN role_menu rm ON rm.menu_id = m.menu_id
+                 LEFT JOIN role r ON r.role_id = rm.role_id
+        WHERE r.role_id = #{roleId}
+    </select>
 </mapper>
