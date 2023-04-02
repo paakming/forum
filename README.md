@@ -1,5 +1,5 @@
 # 工程简介
-校园论坛后端项目
+spring boot+vue校园论坛后端项目
 技术栈
 springboot
 spring security
