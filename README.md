@@ -5,6 +5,7 @@ springboot
 spring security  
 mybatis-plus  
 MySQL  
-redis
+redis  
+前端项目：https://github.com/paakming/luntan
 # 延伸阅读
 
