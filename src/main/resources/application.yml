@@ -73,9 +73,6 @@ spring:
   redis:
     port: 6379
   mail:
-    #QQ:smtp.qq.com
-    #  :yvxmefcbdfifechh
-    #port: 587
     host: smtp.163.com
     username: m2541994309@163.com
     password: VTAOZRVFUNMCUEAI
