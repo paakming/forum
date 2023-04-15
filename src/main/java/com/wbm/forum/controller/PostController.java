@@ -1,15 +1,19 @@
 package com.wbm.forum.controller;
 
 
+import cn.hutool.core.convert.Convert;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wbm.forum.common.Code;
 import com.wbm.forum.common.Result;
 import com.wbm.forum.entity.Post;
+import com.wbm.forum.entity.User;
 import com.wbm.forum.entity.vo.PostVO;
 import com.wbm.forum.exception.MyServiceException;
 import com.wbm.forum.service.PostService;
+import com.wbm.forum.service.UserService;
 import com.wbm.forum.utils.BeanCopyUtils;
 import com.wbm.forum.utils.RedisUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +37,8 @@ public class PostController {
     private PostService postService;
     @Autowired
     private RedisUtils redisUtils;
+    @Autowired
+    private UserService userService;
 
     @GetMapping
     public Result getAllPost(@PathParam("pageNum") Integer pageNum,@PathParam("pageSize") Integer pageSize){
@@ -102,38 +108,17 @@ public class PostController {
                                @PathParam("pageSize") Integer pageSize){
         Date from = jsonObject.getDate("from");
         Date to = jsonObject.getDate("to");
-        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        wrapper.between(Post::getCreateTime, from, to);
-        Page<Post> page = postService.page(new Page<>(pageNum, pageSize), wrapper);
-        List<Post> list = page.getRecords();
-        List<PostVO> postVOS = BeanCopyUtils.copyBeanList(list, PostVO.class);
-        int total = (int) page.getTotal();
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("total",total);
-        map.put("post",postVOS);
+        Map<String, Object> map = postService.searchByTime(from, to, pageNum, pageSize);
         return Result.success(Code.SUCCESS.getCode(),"",map);
     }
     @PostMapping("/searchByPid")
     public Result searchByPid(@RequestBody Post post) {
-        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Post::getPid,post.getPid());
-        List<Post> list = postService.list(wrapper);
-        List<PostVO> postVOS = BeanCopyUtils.copyBeanList(list, PostVO.class);
-        return Result.success(Code.SUCCESS.getCode(),"",postVOS);
+        List<PostVO> postByPid = postService.getPostByPid(post);
+        return Result.success(Code.SUCCESS.getCode(),"",postByPid);
     }
     @PostMapping("/selectByType")
     public Result selectByType(@RequestBody Post post,@PathParam("pageNum") Integer pageNum,@PathParam("pageSize") Integer pageSize){
-        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Post::getType,post.getType())
-                .orderBy(true,false,Post::getIsTop)
-                .orderBy(true,false,Post::getUpdateTime);
-        Page<Post> page = postService.page(new Page<>(pageNum, pageSize), wrapper);
-        List<Post> list = page.getRecords();
-        List<PostVO> postVOS = BeanCopyUtils.copyBeanList(list, PostVO.class);
-        int total = (int) page.getTotal();
-        HashMap<String, Object> map = new HashMap<>();
-        map.put("total",total);
-        map.put("post",postVOS);
+        Map<String, Object> map = postService.selectByType(post, pageNum, pageSize);
         return Result.success(Code.SUCCESS.getCode(),"",map);
     }
     @PutMapping("/views/{pid}")

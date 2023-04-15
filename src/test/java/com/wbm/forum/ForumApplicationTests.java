@@ -59,6 +59,14 @@ class ForumApplicationTests {
     void contextLoads() {
     }
     @Test
+    public void changePwd(){
+        User user = new User();
+        PasswordEncoder encoder = new BCryptPasswordEncoder();
+        String encode = encoder.encode("111111");
+        user.setUid(1).setPassword(encode);
+        userService.updateById(user);
+    }
+    @Test
     public void test2(){
         String pwd = "$2a$10$GG3Xro1Jrs71FsLFsHxI7eGFRIqUEiE7uFLcF5rrD3YFIWB6gN/Ua";
         PasswordEncoder encoder = new BCryptPasswordEncoder();

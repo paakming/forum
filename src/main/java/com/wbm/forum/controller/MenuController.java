@@ -17,6 +17,7 @@ import com.wbm.forum.service.MenuService;
 import com.wbm.forum.service.RoleMenuService;
 import com.wbm.forum.utils.BeanCopyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,6 +31,7 @@ import java.util.List;
  */
 @RestController
 @RequestMapping("/menu")
+@PreAuthorize("hasAuthority('system:menu:manage')")
 public class MenuController {
 
     @Autowired

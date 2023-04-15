@@ -15,10 +15,10 @@ import com.wbm.forum.service.PostService;
 import com.wbm.forum.service.SubCommentService;
 import com.wbm.forum.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping(value = "/echarts")
-
+@PreAuthorize("hasAuthority('system:management')")
 public class EchartsController {
     @Autowired
     private UserService userService;

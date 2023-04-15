@@ -50,7 +50,7 @@ public class UserController {
     @PostMapping
     public Result addUser(@RequestBody User user){
         if (StrUtil.isBlank(user.getPassword()) ){
-            user.setPassword(user.getUsername());
+            user.setPassword("000000");
         }
         Boolean register = userService.register(user);
         if (register){
@@ -109,6 +109,9 @@ public class UserController {
         }
         Boolean changePwd = userService.changePwd(oldPassword, newPassword, repeatPassword);
         if (changePwd){
+            SecurityUser securityUser = (SecurityUser) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            String login = "login-"+securityUser.getUser().getUid();
+            redisUtils.delete(login);
             return Result.success(Code.SUCCESS.getCode(), "修改密码成功,请重新登录");
         }else {
             return Result.error(Code.PASSWORD_UPDATE_FAIL.getCode(), Code.PASSWORD_UPDATE_FAIL.getMsg());
