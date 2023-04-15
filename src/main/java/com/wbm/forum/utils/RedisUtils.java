@@ -44,6 +44,8 @@ public class RedisUtils {
         redisTemplate.delete(keys);
     }
 
+
+
     public  List<String> getKeys(String pattern) {
         return redisTemplate.execute(connection -> {
             RedisKeyCommands command = connection.keyCommands();
