@@ -33,7 +33,7 @@ public class EmailController {
 
     @GetMapping(value = "/email")
     public Result getEmail(@PathParam("emailReceiver")  String emailReceiver){
-        if (Validator.isEmail(emailReceiver) || StrUtil.isBlank(emailReceiver) ){
+        if (!Validator.isEmail(emailReceiver)){
             return Result.error(Code.ERROR.getCode(),"请输入邮箱地址");
         }
         SimpleMailMessage mailMessage = new SimpleMailMessage();

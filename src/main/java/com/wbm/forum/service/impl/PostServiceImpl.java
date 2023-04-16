@@ -4,10 +4,8 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.sun.istack.internal.NotNull;
 import com.wbm.forum.common.Code;
 import com.wbm.forum.entity.*;
 import com.wbm.forum.entity.vo.PostVO;
@@ -24,11 +22,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
+import java.util.*;
 
 /**
 * @author Ming
@@ -68,10 +63,11 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
     @Override
     public Map<String, Object> getPostByUid(Integer uid,Integer pageNum,Integer pageSize) {
         LambdaQueryWrapper<Post> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Post::getUid,uid);
+        queryWrapper.eq(Post::getUid,uid)
+                .orderBy(true,false,Post::getCreateTime);;;
         Page<Post> postPage = postMapper.selectPage(new Page<>(pageNum, pageSize), queryWrapper);
         List<PostVO> postVOS = BeanCopyUtils.copyBeanList(postPage.getRecords(), PostVO.class);
-        postVOS.forEach(this::setUserInfo);
+        postVOS.forEach(this::setCommentNum);
         int total = (int) postPage.getTotal();
         Map<String,Object> map = new HashMap<>();
         map.put("post", postVOS);
@@ -118,6 +114,52 @@ public class PostServiceImpl extends ServiceImpl<PostMapper, Post>
         List<Post> postList = postMapper.selectList(wrapper);
         return BeanCopyUtils.copyBeanList(postList, PostVO.class);
     }
+
+    @Override
+    public List<PostVO> getPostByPid(Post post) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Post::getPid,post.getPid());
+        List<Post> list = list(wrapper);
+        List<PostVO> postVOS = BeanCopyUtils.copyBeanList(list, PostVO.class);
+        postVOS.forEach(this::setUserInfo);
+        postVOS.forEach(this::setCommentNum);
+        return postVOS;
+    }
+
+    @Override
+    public Map<String, Object> searchByTime(Date from, Date to, Integer pageNum, Integer pageSize) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.between(Post::getCreateTime, from, to);
+        Page<Post> page = page(new Page<>(pageNum, pageSize), wrapper);
+        List<Post> list = page.getRecords();
+        List<PostVO> postVOS = BeanCopyUtils.copyBeanList(list, PostVO.class);
+        postVOS.forEach(this::setUserInfo);
+        postVOS.forEach(this::setCommentNum);
+        int total = (int) page.getTotal();
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("total",total);
+        map.put("post",postVOS);
+        return map;
+    }
+
+    @Override
+    public Map<String, Object> selectByType(Post post, Integer pageNum, Integer pageSize) {
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Post::getType,post.getType())
+                .orderBy(true,false,Post::getIsTop)
+                .orderBy(true,false,Post::getUpdateTime);
+        Page<Post> page = page(new Page<>(pageNum, pageSize), wrapper);
+        List<Post> list = page.getRecords();
+        List<PostVO> postVOS = BeanCopyUtils.copyBeanList(list, PostVO.class);
+        postVOS.forEach(this::setUserInfo);
+        postVOS.forEach(this::setCommentNum);
+        int total = (int) page.getTotal();
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("total",total);
+        map.put("post",postVOS);
+        return map;
+    }
+
     public Integer getLikes(Integer pid){
         Set<Object> objects = redisUtils.setMembers("postLikes" + pid);
         return objects.size();
