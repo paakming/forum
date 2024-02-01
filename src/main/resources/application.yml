@@ -73,9 +73,10 @@ spring:
   redis:
     port: 6379
   mail:
+    #填写邮箱的账号密码
     host: smtp.163.com
-    username: m2541994309@163.com
-    password: VTAOZRVFUNMCUEAI
+    username:
+    password:
     port: 994
     default-encoding: utf-8
     properties:
